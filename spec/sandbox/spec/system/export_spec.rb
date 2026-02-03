@@ -3,7 +3,7 @@ require "sandbox_helper"
 RSpec.describe "Export", type: :system, nojs: true do
   let_table_class superclass: ApplicationTable do
     include RapidTable::Export
-    include RapidTable::Ext::Array
+    include RapidTable::Adapters::Array
 
     column :id
     column :name

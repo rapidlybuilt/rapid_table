@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RapidTable
-  module Ext
+  module Adapters
     # RapidTable rendering raw ruby arrays.
     module Array
       extend ActiveSupport::Concern

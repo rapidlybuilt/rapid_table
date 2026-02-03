@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RapidTable
-  module Ext
+  module Adapters
     # Kaminari functionality for RapidTable
     module Kaminari
       extend ActiveSupport::Concern

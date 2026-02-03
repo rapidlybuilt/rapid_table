@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RapidTable
-  module Ext
+  module Adapters
     # RapidTable rendering ActiveRecord relations.
     module ActiveRecord
       extend ActiveSupport::Concern

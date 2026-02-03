@@ -7,13 +7,11 @@
       </div>
     <% end %>
 
-    <% if respond_to?(:skip_search?) && !skip_search? %>
-      <div class="rapid-table-header-actions">
-        <%= search_field_form(class: "rapid-table-search-form") do %>
-          <%= search_field_tag class: "rapid-table-search-input" %>
-        <% end %>
-      </div>
-    <% end %>
+    <div class="rapid-table-header-actions">
+      <%= search_field_form(class: "rapid-table-search-form") do %>
+        <%= search_field_tag class: "rapid-table-search-input" %>
+      <% end unless skip_search? %>
+    </div>
   </div>
 
   <div class="rapid-table-wrapper">

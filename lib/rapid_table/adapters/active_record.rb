@@ -7,8 +7,8 @@ module RapidTable
       extend ActiveSupport::Concern
 
       included do
-        include Search if included_modules.include?(RapidTable::Search)
-        include Sorting if included_modules.include?(RapidTable::Sorting)
+        include Search if include?(RapidTable::Search)
+        include Sorting if include?(RapidTable::Sorting)
       end
 
       def each_record(batch_size: nil, &block)

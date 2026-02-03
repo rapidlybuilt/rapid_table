@@ -7,8 +7,8 @@ module RapidTable
       extend ActiveSupport::Concern
 
       included do
-        include Sorting if included_modules.include?(RapidTable::Sorting)
-        include Search if included_modules.include?(RapidTable::Search)
+        include Sorting if include?(RapidTable::Sorting)
+        include Search if include?(RapidTable::Search)
         include Pagination
       end
 

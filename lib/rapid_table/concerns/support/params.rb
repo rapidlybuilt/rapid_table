@@ -17,7 +17,7 @@ module RapidTable
         # the action in which the table appears by default (not in response to a POST action)
         attr_accessor :action_name
 
-        register_initializer :params
+        register_initializer :params, after: :config_attribute_defaults
 
         config_class! do
           attr_accessor :params

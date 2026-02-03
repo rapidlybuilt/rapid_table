@@ -8,9 +8,9 @@ module RapidTable
       base.class_eval do
         extend BulkActions
         extend Export
-        extend Pagination
 
         include RapidTable::Columns
+        include RapidTable::Pagination
         include RapidTable::Search
         include RapidTable::Sorting
       end

@@ -7,11 +7,12 @@ module RapidTable
     def self.extended(base)
       base.class_eval do
         extend BulkActions
-        extend Columns
         extend Export
         extend Pagination
-        extend Search
-        extend Sorting
+
+        include RapidTable::Columns
+        include RapidTable::Search
+        include RapidTable::Sorting
       end
     end
   end

@@ -45,7 +45,7 @@ module RapidTable
         register_initializer :config_attribute_defaults
       end
 
-      private
+    private
 
       # Applies class-level defaults to any nil config attributes.
       #
@@ -53,9 +53,7 @@ module RapidTable
       # @return [void]
       def initialize_config_attribute_defaults(config)
         self.class.config_attribute_names.each do |name|
-          if config.send(name).nil?
-            config.send(:"#{name}=", self.class.send(name))
-          end
+          config.send(:"#{name}=", self.class.send(name)) if config.send(name).nil?
         end
       end
 

@@ -2,7 +2,7 @@ require "sandbox_helper"
 
 RSpec.describe "Pagination", type: :system do
   let_table_class superclass: ApplicationTable do
-    extend RapidTable::DSL::Columns
+    include RapidTable::Columns
     extend RapidTable::DSL::Pagination
 
     include RapidTable::Ext::Array

@@ -2,8 +2,7 @@ require "sandbox_helper"
 
 RSpec.describe "Columns", type: :system do
   let_table_class superclass: ApplicationTable do
-    extend RapidTable::DSL::Columns
-
+    include RapidTable::Columns
     include RapidTable::Ext::Array
 
     column :id

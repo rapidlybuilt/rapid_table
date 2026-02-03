@@ -11,9 +11,8 @@ module RapidTable
 
     included do
       config_attribute :skip_search, default: false
-      config_attribute :search_param, default: :q
+      config_attribute_param :search_param, default: :q
 
-      register_initializer :search
       register_filter :search, unless: :skip_search?
     end
 
@@ -59,16 +58,6 @@ module RapidTable
     # @raise [ExtensionRequiredError] If no extension provides this functionality
     def filter_search(_scope)
       raise ExtensionRequiredError, "not implemented"
-    end
-
-  private
-
-    # Initializes search by registering the search parameter name.
-    #
-    # @param config [Object] The configuration object containing search settings
-    # @return [void]
-    def initialize_search(_config)
-      register_param_name(search_param)
     end
   end
 end

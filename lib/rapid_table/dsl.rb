@@ -7,9 +7,9 @@ module RapidTable
     def self.extended(base)
       base.class_eval do
         extend BulkActions
-        extend Export
 
         include RapidTable::Columns
+        include RapidTable::Export
         include RapidTable::Pagination
         include RapidTable::Search
         include RapidTable::Sorting

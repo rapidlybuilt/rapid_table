@@ -6,8 +6,7 @@ module RapidTable
     # Extends the base class with DSL functionality.
     def self.extended(base)
       base.class_eval do
-        extend BulkActions
-
+        include RapidTable::BulkActions
         include RapidTable::Columns
         include RapidTable::Export
         include RapidTable::Pagination

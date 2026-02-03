@@ -111,7 +111,7 @@ module RapidTable
     # @raise [ArgumentError] If no columns are specified in the configuration
     # @return [void]
     def initialize_columns(config)
-      config.columns ||= resolve_columns_from_dsl(config) || raise(ArgumentError, "columns must be specified")
+      config.columns ||= resolve_columns(config) || raise(ArgumentError, "columns must be specified")
 
       columns = self.class.build_columns(config.columns)
       self.columns = filter_columns(columns)
@@ -121,7 +121,7 @@ module RapidTable
     #
     # @param config [Object] The configuration object
     # @return [Array, nil] The resolved columns or nil if no DSL columns defined
-    def resolve_columns_from_dsl(config)
+    def resolve_columns(config)
       return unless config.column_ids || config.column_group_id || self.class.columns.any?
 
       # Default to :default column group if neither is specified but DSL columns exist

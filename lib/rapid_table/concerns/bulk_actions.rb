@@ -11,25 +11,38 @@ module RapidTable
   # Bulk action configuration:
   # @option config bulk_action.id [Symbol] The unique identifier for the bulk action
   # @option config bulk_action.label [String] The display label for the bulk action (optional)
+  #
+  # @example Basic usage
+  #   class MyTable < RapidTable::Base
+  #     self.skip_bulk_actions = false
+  #     self.bulk_actions_param = :selected_ids
+  #
+  #     bulk_action :delete
+  #     bulk_action :archive, label: "Archive Selected"
+  #   end
+  #
+  # @example With bulk actions disabled
+  #   class MyTable < RapidTable::Base
+  #     self.skip_bulk_actions = true
+  #   end
   module BulkActions
     extend ActiveSupport::Concern
 
+    class NotFoundError < Error; end
+
     included do
+      extend ClassMethods
+
+      config_attribute :skip_bulk_actions, default: false
+      config_attribute :bulk_actions_param, default: :ids
+
       register_initializer :bulk_actions
 
       attr_accessor :bulk_actions
 
       config_class! do
-        attr_accessor :skip_bulk_actions
         attr_accessor :bulk_actions
-        attr_accessor :bulk_actions_param
-
-        alias_method :skip_bulk_actions?, :skip_bulk_actions
-      end
-
-      with_options to: :config do
-        delegate :skip_bulk_actions?
-        delegate :bulk_actions_param
+        attr_accessor :bulk_action_ids
       end
 
       def_extendable_class :bulk_action do
@@ -155,10 +168,69 @@ module RapidTable
     # @param config [Object] The configuration object containing bulk action settings
     # @return [void]
     def initialize_bulk_actions(config)
+      # Resolve bulk actions from DSL if not provided directly
+      config.bulk_actions ||= resolve_bulk_actions(config)
+
       self.bulk_actions = self.class.build_bulk_actions(config.bulk_actions || [])
 
-      config.bulk_actions_param ||= :ids
+      # Disable bulk actions if none are defined
       config.skip_bulk_actions = true if bulk_actions.empty?
+    end
+
+    # Resolves bulk actions from DSL definitions (bulk_action_ids or class-level bulk_actions).
+    #
+    # @param config [Object] The configuration object
+    # @return [Array, nil] The resolved bulk actions or nil
+    def resolve_bulk_actions(config)
+      ids = config.bulk_action_ids
+      if ids
+        ids.map { |id| self.class.find_bulk_action(id) }
+      elsif self.class.bulk_actions.any?
+        self.class.bulk_actions
+      end
+    end
+
+    # Class methods for bulk action DSL configuration.
+    module ClassMethods
+      # Defines a new bulk action for this table.
+      #
+      # @param id [Symbol] The unique identifier for the bulk action
+      # @param label [String, nil] The display label for the bulk action (optional)
+      # @param options [Hash] Additional options for the bulk action
+      # @return [Object] The created bulk action object
+      # @example
+      #   bulk_action :delete, label: "Delete Selected"
+      def bulk_action(id, label: nil, **options)
+        bulk_actions_by_id[id] = build_bulk_action(**options, id:, label:)
+      end
+
+      # Gets all defined bulk actions for this table.
+      #
+      # @return [Array<Object>] Array of bulk action objects
+      def bulk_actions
+        (superclass.respond_to?(:bulk_actions) ? superclass.bulk_actions : []) +
+          bulk_actions_by_id.values
+      end
+
+      # Finds a bulk action by ID, searching up the inheritance chain.
+      #
+      # @param id [Symbol] The ID of the bulk action to find
+      # @return [Object, nil] The found bulk action or nil if not found
+      # @raise [RapidTable::BulkActions::NotFoundError] If the bulk action is not found
+      def find_bulk_action(id)
+        bulk_actions_by_id[id] ||
+          (superclass&.find_bulk_action(id) if superclass.respond_to?(:find_bulk_action)) ||
+          raise(RapidTable::BulkActions::NotFoundError, "Bulk action #{id} not found")
+      end
+
+    private
+
+      # Returns the registry of bulk actions by ID.
+      #
+      # @return [Hash<Symbol, Object>] The registry of bulk actions
+      def bulk_actions_by_id
+        @bulk_actions_by_id ||= {}
+      end
     end
   end
 end

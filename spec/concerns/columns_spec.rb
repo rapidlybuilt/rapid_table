@@ -111,7 +111,7 @@ RSpec.describe RapidTable::Columns do
       end
 
       it "raises error when column not found" do
-        expect { table_class.find_column!(:missing) }.to raise_error(RapidTable::ColumnNotFoundError)
+        expect { table_class.find_column!(:missing) }.to raise_error(RapidTable::Columns::ColumnNotFoundError)
       end
     end
 
@@ -136,7 +136,7 @@ RSpec.describe RapidTable::Columns do
       end
 
       it "raises error when column group not found" do
-        expect { table_class.find_column_group!(:missing) }.to raise_error(RapidTable::ColumnGroupNotFoundError)
+        expect { table_class.find_column_group!(:missing) }.to raise_error(RapidTable::Columns::ColumnGroupNotFoundError)
       end
     end
 

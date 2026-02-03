@@ -61,7 +61,7 @@ module RapidTable
 
         stream.write(CSV.generate_line(export_columns.map(&:id), row_sep:))
 
-        each_record(batch_size: export_batch_size, skip_pagination: true) do |record|
+        each_record(batch_size: export_batch_size) do |record|
           cells = export_columns.map do |column|
             column_cell(record, column)
           end
@@ -78,7 +78,7 @@ module RapidTable
       with_export do
         data = []
 
-        each_record(batch_size: export_batch_size, skip_pagination: true) do |record|
+        each_record(batch_size: export_batch_size) do |record|
           data << export_columns.each_with_object({}) do |column, hash|
             hash[column.id] = column_cell(record, column)
           end
@@ -101,10 +101,9 @@ module RapidTable
     # Iterates over records for export processing. Must be implemented by extensions.
     #
     # @param batch_size [Integer, nil] The number of records to process in each batch
-    # @param skip_pagination [Boolean] Whether to skip pagination during export
     # @yield [record] Block to execute for each record
     # @raise [ExtensionRequiredError] If no extension provides this functionality
-    def each_record(batch_size: nil, skip_pagination: false)
+    def each_record(batch_size: nil)
       raise ExtensionRequiredError
     end
     # rubocop:enable Lint/UnusedMethodArgument

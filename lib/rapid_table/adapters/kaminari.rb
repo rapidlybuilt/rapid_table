@@ -5,31 +5,23 @@ module RapidTable
     # Kaminari functionality for RapidTable
     module Kaminari
       extend ActiveSupport::Concern
+      include RapidTable::Ext::Pagination
 
       included do
-        include Pagination if included_modules.include?(RapidTable::Pagination)
+        register_filter :kaminari, unless: :skip_pagination?
+
+        with_options to: :records do
+          delegate :total_pages
+          delegate :current_page
+        end
       end
 
-      # Kaminari Pagination functionality for RapidTable
-      module Pagination
-        extend ActiveSupport::Concern
+      def filter_kaminari(scope)
+        scope.page(page).per(per_page)
+      end
 
-        included do
-          register_filter :pagination, unless: :skip_pagination?
-
-          with_options to: :records do
-            delegate :total_pages
-            delegate :current_page
-          end
-        end
-
-        def filter_pagination(scope)
-          scope.page(page).per(per_page)
-        end
-
-        def total_records_count
-          records.total_count
-        end
+      def total_records_count
+        records.total_count
       end
     end
   end

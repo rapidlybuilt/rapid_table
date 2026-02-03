@@ -11,10 +11,8 @@ module RapidTable
         include Sorting if included_modules.include?(RapidTable::Sorting)
       end
 
-      def each_record(batch_size: nil, skip_pagination: false, &block)
-        collection = records
-        collection = collection.unscope(:limit, :offset) if skip_pagination
-        collection.find_each(batch_size:, &block)
+      def each_record(batch_size: nil, &block)
+        records.unscope(:limit, :offset).find_each(batch_size:, &block)
       end
 
       def record_id(record)

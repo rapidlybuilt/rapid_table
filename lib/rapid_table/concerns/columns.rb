@@ -56,6 +56,9 @@ module RapidTable
   module Columns
     extend ActiveSupport::Concern
 
+    class ColumnNotFoundError < RapidTable::Error; end
+    class ColumnGroupNotFoundError < RapidTable::Error; end
+
     included do
       extend ClassMethods
 
@@ -224,9 +227,9 @@ module RapidTable
       #
       # @param column_id [Symbol] The ID of the column to find
       # @return [Object] The found column
-      # @raise [RapidTable::ColumnNotFoundError] If the column is not found
+      # @raise [Columns::ColumnNotFoundError] If the column is not found
       def find_column!(column_id)
-        find_column(column_id) || raise(RapidTable::ColumnNotFoundError, "Column #{column_id} not found")
+        find_column(column_id) || raise(ColumnNotFoundError, "Column #{column_id} not found")
       end
 
       # Finds a column group by ID, searching up the inheritance chain.
@@ -243,9 +246,9 @@ module RapidTable
       #
       # @param group_id [Symbol] The ID of the column group to find
       # @return [Object] The found column group
-      # @raise [RapidTable::ColumnGroupNotFoundError] If the column group is not found
+      # @raise [Columns::ColumnGroupNotFoundError] If the column group is not found
       def find_column_group!(group_id)
-        find_column_group(group_id) || raise(RapidTable::ColumnGroupNotFoundError, "Column group #{group_id} not found")
+        find_column_group(group_id) || raise(Columns::ColumnGroupNotFoundError, "Column group #{group_id} not found")
       end
 
       # Finds columns by IDs or column group ID.

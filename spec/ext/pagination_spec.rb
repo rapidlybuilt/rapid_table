@@ -2,9 +2,9 @@
 
 require "rails_helper"
 
-RSpec.describe RapidTable::Pagination do
+RSpec.describe RapidTable::Ext::Pagination do
   let_table_class do
-    include RapidTable::Pagination
+    include RapidTable::Ext::Pagination
   end
 
   let(:table) { table_class.new([]) }
@@ -19,7 +19,7 @@ RSpec.describe RapidTable::Pagination do
     end
 
     it "allows custom pagination configuration" do
-      table = table_class.new([], 
+      table = table_class.new([],
         page_param: :p,
         per_page_param: :size,
         available_per_pages: [10, 20],
@@ -79,7 +79,7 @@ RSpec.describe RapidTable::Pagination do
       table_class.per_page_param = :size
       table_class.per_page = 25
       table_class.available_per_pages = [10, 25, 50]
-      
+
       expect(table_class.skip_pagination).to be_truthy
       expect(table_class.page_param).to eq(:p)
       expect(table_class.per_page_param).to eq(:size)
@@ -95,7 +95,7 @@ RSpec.describe RapidTable::Pagination do
       table_class.per_page_param = :size
       table_class.per_page = 25
       table_class.available_per_pages = [10, 25, 50]
-      
+
       table = table_class.new([])
       expect(table.skip_pagination?).to be_truthy
       expect(table.page_param).to eq(:p)
@@ -110,8 +110,8 @@ RSpec.describe RapidTable::Pagination do
       table_class.per_page_param = :per
       table_class.per_page = 50
       table_class.available_per_pages = [25, 50, 100]
-      
-      table = table_class.new([], 
+
+      table = table_class.new([],
         skip_pagination: true,
         page_param: :p,
         per_page_param: :size,

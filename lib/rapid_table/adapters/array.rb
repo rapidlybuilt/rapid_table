@@ -7,22 +7,21 @@ module RapidTable
       extend ActiveSupport::Concern
 
       included do
-        include Pagination if included_modules.include?(RapidTable::Pagination)
         include Sorting if included_modules.include?(RapidTable::Sorting)
         include Search if included_modules.include?(RapidTable::Search)
+        include Pagination
       end
 
       # rubocop:disable Lint/UnusedMethodArgument
-      def each_record(batch_size: nil, skip_pagination: false, &block)
-        collection = records
-        collection = collection.unpaginated_array if skip_pagination
-        collection.each(&block)
+      def each_record(batch_size: nil, &block)
+        records.unpaginated_array.each(&block)
       end
       # rubocop:enable Lint/UnusedMethodArgument
 
       # RapidTable pagination functionality for raw ruby arrays.
       module Pagination
         extend ActiveSupport::Concern
+        include RapidTable::Ext::Pagination
 
         included do
           register_filter :pagination, unless: :skip_pagination?

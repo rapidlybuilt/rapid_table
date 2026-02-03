@@ -2,9 +2,9 @@
 
 require "rails_helper"
 
-RSpec.describe RapidTable::BulkActions do
+RSpec.describe RapidTable::Ext::BulkActions do
   let_table_class do
-    include RapidTable::BulkActions
+    include RapidTable::Ext::BulkActions
   end
 
   let(:bulk_action_class) { table_class.bulk_action_class }
@@ -94,7 +94,7 @@ RSpec.describe RapidTable::BulkActions do
     end
 
     it "raises error when bulk action not found" do
-      expect { table_class.find_bulk_action(:missing) }.to raise_error(RapidTable::BulkActions::NotFoundError)
+      expect { table_class.find_bulk_action(:missing) }.to raise_error(RapidTable::Ext::BulkActions::BulkActionNotFoundError)
     end
   end
 
@@ -102,7 +102,7 @@ RSpec.describe RapidTable::BulkActions do
     let(:parent_class) do
       Class.new do
         include RapidTable::Support
-        include RapidTable::BulkActions
+        include RapidTable::Ext::BulkActions
         bulk_action :delete
       end
     end

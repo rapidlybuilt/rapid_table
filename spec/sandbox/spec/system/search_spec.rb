@@ -2,8 +2,7 @@ require "sandbox_helper"
 
 RSpec.describe "Search", type: :system do
   let_table_class superclass: ApplicationTable do
-    extend RapidTable::DSL::Search
-
+    include RapidTable::Search
     include RapidTable::Ext::Array
 
     column :id

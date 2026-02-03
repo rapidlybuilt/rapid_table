@@ -2,9 +2,8 @@ require "sandbox_helper"
 
 RSpec.describe "Sorting", type: :system do
   let_table_class superclass: ApplicationTable do
-    extend RapidTable::DSL::Sorting
-
-    include RapidTable::Ext::Array
+    include RapidTable::Sorting
+    include RapidTable::Adapters::Array
 
     column :id, sortable: true, sort_order: :desc
     column :name, sortable: true

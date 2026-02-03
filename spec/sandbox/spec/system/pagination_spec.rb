@@ -2,10 +2,9 @@ require "sandbox_helper"
 
 RSpec.describe "Pagination", type: :system do
   let_table_class superclass: ApplicationTable do
-    extend RapidTable::DSL::Columns
-    extend RapidTable::DSL::Pagination
-
-    include RapidTable::Ext::Array
+    include RapidTable::Columns
+    include RapidTable::Ext::Pagination
+    include RapidTable::Adapters::Array
 
     column :id
     column :name
@@ -16,7 +15,7 @@ RSpec.describe "Pagination", type: :system do
   let(:pages) { records.each_slice(25).to_a }
 
   describe "pagination links" do
-    before { mock_table } 
+    before { mock_table }
 
     it "navigates to specific pages" do
       visit mocked_table_path
@@ -101,7 +100,7 @@ RSpec.describe "Pagination", type: :system do
       visit mocked_table_path
       expect(page).to have_select("Per Page", options: %w[25 50 100])
     end
-    
+
     it "updates the per page" do
       visit mocked_table_path
       select "50", from: "Per Page"

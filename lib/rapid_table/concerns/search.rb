@@ -10,19 +10,9 @@ module RapidTable
     extend ActiveSupport::Concern
 
     included do
-      config_class! do
-        attr_accessor :skip_search
-        attr_accessor :search_param
+      config_attribute :skip_search, default: false
+      config_attribute_param :search_param, default: :q
 
-        alias_method :skip_search?, :skip_search
-      end
-
-      with_options to: :config do
-        delegate :skip_search?
-        delegate :search_param
-      end
-
-      register_initializer :search
       register_filter :search, unless: :skip_search?
     end
 
@@ -68,18 +58,6 @@ module RapidTable
     # @raise [ExtensionRequiredError] If no extension provides this functionality
     def filter_search(_scope)
       raise ExtensionRequiredError, "not implemented"
-    end
-
-  private
-
-    # Initializes search configuration with default values.
-    #
-    # @param config [Object] The configuration object containing search settings
-    # @return [void]
-    def initialize_search(config)
-      config.search_param ||= :q
-
-      register_param_name(search_param)
     end
   end
 end

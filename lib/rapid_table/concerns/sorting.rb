@@ -13,35 +13,82 @@ module RapidTable
   # Column-level sorting options:
   # @option config column.sortable [Boolean] Whether this column is sortable (default: false)
   # @option config column.sort_order [String] The default sort order for this column (default: "asc")
+  #
+  # @example Basic usage
+  #   class MyTable < RapidTable::Base
+  #     self.skip_sorting = false
+  #     self.sort_column = :name
+  #     self.sort_order = :asc
+  #   end
+  #
+  # @example With sorting disabled
+  #   class MyTable < RapidTable::Base
+  #     self.skip_sorting = true
+  #   end
   module Sorting
     extend ActiveSupport::Concern
 
     included do
       include Columns
+      extend ClassMethods
+
+      config_attribute :skip_sorting, default: false
+      config_attribute_param :sort_column_param, default: :sort
+      config_attribute_param :sort_order_param, default: :dir
 
       register_initializer :sorting, after: :columns
       register_filter :sorting, unless: :skip_sorting?
 
       config_class! do
-        attr_accessor :skip_sorting
-        attr_accessor :sort_column_param
-        attr_accessor :sort_order_param
-
         attr_accessor :sort_column
         attr_accessor :sort_order
-
-        alias_method :skip_sorting?, :skip_sorting
-      end
-
-      with_options to: :config do
-        delegate :skip_sorting?
-        delegate :sort_column_param
-        delegate :sort_order_param
       end
 
       column_class! do
         attr_accessor :sortable, :sort_order
         alias_method :sortable?, :sortable
+      end
+
+      # Add sort_column and sort_order to column groups if available
+      column_group_class! do
+        attr_accessor :sort_column, :sort_order
+      end
+    end
+
+    # Class methods for sort configuration via column groups.
+    module ClassMethods
+      # Gets the default sort column for this table.
+      #
+      # @return [Symbol, nil] The sort column ID or nil if not set
+      def sort_column
+        default_column_group.sort_column
+      end
+
+      # Sets the default sort column for this table.
+      #
+      # @param id [Symbol] The column ID to sort by
+      # @return [Object] The modified column group
+      def sort_column=(id)
+        default_column_group.tap do |group|
+          group.sort_column = id
+        end
+      end
+
+      # Gets the default sort order for this table.
+      #
+      # @return [String, nil] The sort order ("asc" or "desc") or nil if not set
+      def sort_order
+        default_column_group.sort_order
+      end
+
+      # Sets the default sort order for this table.
+      #
+      # @param order [String] The sort order ("asc" or "desc")
+      # @return [Object] The modified column group
+      def sort_order=(order)
+        default_column_group.tap do |group|
+          group.sort_order = order
+        end
       end
     end
 
@@ -125,9 +172,13 @@ module RapidTable
   private
 
     def initialize_sorting(config)
-      config.sort_column_param ||= :sort
-      config.sort_order_param ||= :dir
-      register_param_name(config.sort_column_param, config.sort_order_param)
+      # Copy sort_column and sort_order from column group if available
+      column_group_id = config.column_group_id
+      return unless column_group_id
+
+      column_group = self.class.find_column_group!(column_group_id)
+      config.sort_column ||= column_group.sort_column
+      config.sort_order ||= column_group.sort_order
     end
 
     def find_sortable_column(id)

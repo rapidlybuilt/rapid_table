@@ -11,29 +11,30 @@ module RapidTable
   #
   # Column-level export options:
   # @option config column.skip_export [Boolean] Whether to exclude this column from exports
+  #
+  # @example Basic usage
+  #   class MyTable < RapidTable::Base
+  #     self.skip_export = false
+  #     self.csv_column_separator = ";"
+  #     self.export_batch_size = 500
+  #   end
+  #
+  # @example With export disabled
+  #   class MyTable < RapidTable::Base
+  #     self.skip_export = true
+  #   end
   module Export
     extend ActiveSupport::Concern
 
     included do
       include Columns
 
+      config_attribute :skip_export, default: false
+      config_attribute :csv_column_separator, default: ","
+      config_attribute :export_batch_size, default: 1000
+      config_attribute :export_formats, default: %i[csv json]
+
       register_initializer :export
-
-      config_class! do
-        attr_accessor :csv_column_separator
-        attr_accessor :export_batch_size
-        attr_accessor :export_formats
-        attr_accessor :skip_export
-
-        alias_method :skip_export?, :skip_export
-      end
-
-      with_options to: :config do
-        delegate :csv_column_separator
-        delegate :export_batch_size
-        delegate :export_formats
-        delegate :skip_export?
-      end
 
       column_class! do
         attr_accessor :skip_export
@@ -60,7 +61,7 @@ module RapidTable
 
         stream.write(CSV.generate_line(export_columns.map(&:id), row_sep:))
 
-        each_record(batch_size: export_batch_size, skip_pagination: true) do |record|
+        each_record(batch_size: export_batch_size) do |record|
           cells = export_columns.map do |column|
             column_cell(record, column)
           end
@@ -77,7 +78,7 @@ module RapidTable
       with_export do
         data = []
 
-        each_record(batch_size: export_batch_size, skip_pagination: true) do |record|
+        each_record(batch_size: export_batch_size) do |record|
           data << export_columns.each_with_object({}) do |column, hash|
             hash[column.id] = column_cell(record, column)
           end
@@ -100,25 +101,22 @@ module RapidTable
     # Iterates over records for export processing. Must be implemented by extensions.
     #
     # @param batch_size [Integer, nil] The number of records to process in each batch
-    # @param skip_pagination [Boolean] Whether to skip pagination during export
     # @yield [record] Block to execute for each record
     # @raise [ExtensionRequiredError] If no extension provides this functionality
-    def each_record(batch_size: nil, skip_pagination: false)
+    def each_record(batch_size: nil)
       raise ExtensionRequiredError
     end
     # rubocop:enable Lint/UnusedMethodArgument
 
   private
 
-    # Initializes export configuration with default values.
+    # Initializes export configuration.
     #
     # @param config [Object] The configuration object containing export settings
     # @return [void]
     def initialize_export(config)
-      config.csv_column_separator ||= ","
-      config.export_batch_size ||= 1000
-      config.export_formats ||= %i[csv json]
-      config.skip_export = config.export_formats.empty? if config.skip_export.nil?
+      # Disable export if no formats are specified
+      config.skip_export = true if config.export_formats.empty?
     end
 
     # Executes a block within the export context, setting the exporting_data flag.

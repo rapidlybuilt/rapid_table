@@ -2,9 +2,8 @@ require "sandbox_helper"
 
 RSpec.describe "Search", type: :system do
   let_table_class superclass: ApplicationTable do
-    extend RapidTable::DSL::Search
-
-    include RapidTable::Ext::Array
+    include RapidTable::Search
+    include RapidTable::Adapters::Array
 
     column :id
     column :name, searchable: true

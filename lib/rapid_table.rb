@@ -16,10 +16,6 @@ loader.setup
 # RapidTable is a gem for rendering tables in Rails applications.
 module RapidTable
   class Error < StandardError; end
-  class ColumnNotFoundError < Error; end
-  class ColumnGroupNotFoundError < Error; end
-  class BulkActionNotFoundError < Error; end
-  class RowActionNotFoundError < Error; end
   class ExtensionRequiredError < Error; end
   class ExtendableClassNotFoundError < Error; end
 

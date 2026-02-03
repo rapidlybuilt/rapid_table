@@ -1,6 +1,6 @@
 <div id="<%%= id %>" data-controller="rapid-table">
   <div class="rapid-table-header">
-    <%% unless skip_bulk_actions? %>
+    <%% if respond_to?(:skip_bulk_actions?) && !skip_bulk_actions? %>
       <div class="rapid-table-bulk-actions-select-container">
         <%%= bulk_actions_select_tag class: "rapid-table-select" %>
         <%%= bulk_actions_submit_tag class: "rapid-table-button" %>
@@ -21,7 +21,7 @@
           <table class="rapid-table">
             <thead class="rapid-table-header">
               <tr>
-                <%% unless skip_bulk_actions? %>
+                <%% if respond_to?(:skip_bulk_actions?) && !skip_bulk_actions? %>
                   <th scope="col" class="rapid-table-header-cell w-8">
                     <span><%%= bulk_actions_select_all_check_box_tag %></span>
                   </th>
@@ -37,7 +37,7 @@
             <tbody class="rapid-table-body">
               <%% records.each do |record| %>
                 <tr id="<%%= dom_id record %>">
-                  <%% unless skip_bulk_actions? %>
+                  <%% if respond_to?(:skip_bulk_actions?) && !skip_bulk_actions? %>
                     <td class="rapid-table-cell">
                       <%%= bulk_actions_select_one_check_box_tag record %>
                     </td>

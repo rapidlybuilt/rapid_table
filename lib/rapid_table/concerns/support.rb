@@ -9,7 +9,7 @@ module RapidTable
       include ExtendableClass
       include Hotwire
       include Params
-      include RegisterProcs
+      include ConfigAttribute
     end
   end
 end

@@ -2,9 +2,8 @@ require "sandbox_helper"
 
 RSpec.describe "Bulk Actions", type: :system do
   let_table_class superclass: ApplicationTable do
-    extend RapidTable::DSL::BulkActions
-
-    include RapidTable::Ext::Array
+    include RapidTable::Ext::BulkActions
+    include RapidTable::Adapters::Array
 
     column :id
     column :name

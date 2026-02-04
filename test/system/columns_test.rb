@@ -12,16 +12,10 @@ class ColumnsSystemTest < ApplicationSystemTestCase
   end
 
   class TestTableWithIdCell < TestTable
-    column :id, html_cell_method: :id_cell
+    column :id
 
-    def id_cell(record, column)
+    column_html :id do |record|
       "ID: #{record.id}."
-    end
-  end
-
-  class TestTableWithStringCell < TestTable
-    def string_cell(value)
-      "String: #{value}."
     end
   end
 
@@ -65,14 +59,6 @@ class ColumnsSystemTest < ApplicationSystemTestCase
     visit mocked_table_path
     assert_text "ID: 1."
     assert_text "ID: 2."
-  end
-
-  test "allows explicit column type methods" do
-    self.table_class = TestTableWithStringCell
-    mock_table
-    visit mocked_table_path
-    assert_text "String: Name 1.."
-    assert_text "String: Name 2.."
   end
 
   # Filtering tests

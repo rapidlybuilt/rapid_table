@@ -10,6 +10,8 @@ module RapidTable
         include RapidTable::Export
         include RapidTable::Search
         include RapidTable::Sorting
+
+        include RapidTable::ColumnTypes
       end
     end
   end

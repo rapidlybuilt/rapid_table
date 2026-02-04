@@ -40,10 +40,12 @@ Create a table class that inherits from `ApplicationTable`:
 
 ```ruby
 class UsersTable < ApplicationTable
-  column :id
-  column :name, label: "Full Name"
-  column :email, sortable: true
-  column :created_at, label: "Joined"
+  columns do |t|
+    t.integer :id
+    t.string :name, label: "Full Name"
+    t.string :email, sortable: true
+    t.datetime :created_at, label: "Joined"
+  end
 
   self.sort_column = :name
   self.sort_order = "asc"
@@ -66,13 +68,16 @@ Or pass records with options:
 
 ### Columns
 
-Define columns using the `column` class method:
+Define columns using the `columns` block with typed column methods:
 
 ```ruby
 class UsersTable < ApplicationTable
-  column :id, label: "ID"
-  column :name, label: "Full Name"
-  column :email
+  columns do |t|
+    t.integer :id, label: "ID"
+    t.string :name, label: "Full Name"
+    t.string :email
+    t.datetime :created_at
+  end
 
   # explicit logic for rendering the email column
   column_html :email do |record|
@@ -80,6 +85,47 @@ class UsersTable < ApplicationTable
   end
 end
 ```
+
+**Available column types:**
+
+| Type | Description | Example Output |
+|------|-------------|----------------|
+| `string` | Basic string | `"Hello"` |
+| `integer` | Number with thousands separators | `1,234,567` |
+| `float` | Decimal with 2 places | `1,234.50` |
+| `date` | Human-readable date | `January 15, 2024` |
+| `datetime` | Date with time | `January 15, 2024 14:30` |
+| `boolean` | Yes/No display | `Yes` or `No` |
+| `currency` | Dollar format | `$1,234.50` |
+| `percentage` | Percentage format | `75.00%` |
+
+Define your own column types to reuse across all tables:
+
+```ruby
+class ApplicationTable < RapidTable::Base
+  extend RapidTable::DSL
+
+  # Define a custom type for email links
+  column_type :email do |value|
+    link_to value, "mailto:#{value}"
+  end
+
+  # Define a custom type for file sizes
+  column_type :filesize do |value|
+    number_to_human_size(value)
+  end
+end
+
+class UsersTable < ApplicationTable
+  columns do |t|
+    t.string :name
+    t.email :email          # Uses custom email type
+    t.filesize :avatar_size # Uses custom filesize type
+  end
+end
+```
+
+The block receives the column value and has access to all Rails view helpers. Nil values are handled automatically and won't be passed to the block.
 
 **Column options:**
 
@@ -101,10 +147,12 @@ UsersTable.new(@users, except: [:id])
 
 ```ruby
 class UsersTable < ApplicationTable
-  column :id
-  column :name
-  column :email
-  column :phone
+  columns do |t|
+    t.integer :id
+    t.string :name
+    t.string :email
+    t.string :phone
+  end
 
   column_group :basic, [:name, :email]
   column_group :contact, [:email, :phone]
@@ -120,9 +168,11 @@ Export table data to CSV or JSON formats:
 
 ```ruby
 class UsersTable < ApplicationTable
-  column :id
-  column :name
-  column :secret, skip_export: true  # Excluded from exports
+  columns do |t|
+    t.integer :id
+    t.string :name
+    t.string :secret, skip_export: true  # Excluded from exports
+  end
 
   self.export_formats = [:csv, :json]
   self.csv_column_separator = ","
@@ -166,8 +216,10 @@ end
 The search query is read from `params[:q]` (or your configured param). For ActiveRecord adapters, this calls a `search` scope on your model. For Array adapters, mark columns as searchable:
 
 ```ruby
-column :name, searchable: true
-column :email, searchable: true
+columns do |t|
+  t.string :name, searchable: true
+  t.string :email, searchable: true
+end
 ```
 
 **Disable search:**
@@ -184,9 +236,11 @@ Make columns sortable and configure default sort behavior:
 
 ```ruby
 class UsersTable < ApplicationTable
-  column :id
-  column :name, sortable: true, sort_order: "asc"
-  column :created_at, sortable: true
+  columns do |t|
+    t.integer :id
+    t.string :name, sortable: true, sort_order: "asc"
+    t.datetime :created_at, sortable: true
+  end
 
   self.sort_column = :name
   self.sort_order = "desc"
@@ -215,7 +269,9 @@ For tables backed by ActiveRecord relations:
 class UsersTable < ApplicationTable
   include RapidTable::Adapters::ActiveRecord
 
-  column :name, sortable: true, nulls_last: true
+  columns do |t|
+    t.string :name, sortable: true, nulls_last: true
+  end
 end
 
 # Usage
@@ -237,8 +293,10 @@ For tables backed by plain Ruby arrays:
 class ItemsTable < ApplicationTable
   include RapidTable::Adapters::Array
 
-  column :name, sortable: true, searchable: true
-  column :price, sortable: true
+  columns do |t|
+    t.string :name, sortable: true, searchable: true
+    t.currency :price, sortable: true
+  end
 end
 
 # Usage with array of objects

@@ -11,7 +11,7 @@ end
 require_relative "../test/dummy/config/environment"
 require "rapid_table"
 
-# RapidTable::LOADER.eager_load
+RapidTable::LOADER.eager_load
 
 require "minitest/mock"
 Dir[File.join(__dir__, "support", "**", "*.rb")].sort.each { |f| require f }

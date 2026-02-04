@@ -7,6 +7,7 @@ require "rubocop/rake_task"
 
 RuboCop::RakeTask.new
 
+desc "Run tests"
 task :test do
   system("bin/test")
 end

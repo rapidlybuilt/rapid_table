@@ -118,10 +118,8 @@ module RapidTable
     #
     # @param batch_size [Integer, nil] The number of records to process in each batch (optional, for extensions)
     # @yield [record] Block to execute for each record
-    def each_record(batch_size: nil)
-      base_scope.each do |record|
-        yield record
-      end
+    def each_record(batch_size: nil, &block)
+      base_scope.each(&block)
     end
     # rubocop:enable Lint/UnusedMethodArgument
 
@@ -143,11 +141,11 @@ module RapidTable
       # @param column_id [Symbol] The ID of the column
       # @param block [Proc] The block to define the export method
       # @return [void]
-      def column_export(column_id, &block)
+      def column_export(column_id, &)
         column = find_column!(column_id)
 
         name = :"column_cell_export_#{column_id}"
-        define_column_method(name, &block)
+        define_column_method(name, &)
         column.export_method = name
       end
 
@@ -156,11 +154,11 @@ module RapidTable
       # @param column_id [Symbol] The ID of the column
       # @param block [Proc] The block to define the CSV method
       # @return [void]
-      def column_csv(column_id, &block)
+      def column_csv(column_id, &)
         column = find_column!(column_id)
 
         name = :"column_cell_csv_#{column_id}"
-        define_column_method(name, &block)
+        define_column_method(name, &)
         column.csv_method = name
       end
 
@@ -169,11 +167,11 @@ module RapidTable
       # @param column_id [Symbol] The ID of the column
       # @param block [Proc] The block to define the JSON method
       # @return [void]
-      def column_json(column_id, &block)
+      def column_json(column_id, &)
         column = find_column!(column_id)
 
         name = :"column_cell_json_#{column_id}"
-        define_column_method(name, &block)
+        define_column_method(name, &)
         column.json_method = name
       end
     end

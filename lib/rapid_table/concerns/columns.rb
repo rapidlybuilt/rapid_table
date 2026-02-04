@@ -16,7 +16,6 @@ module RapidTable
   # When using hashes, each hash supports:
   # @option config column.id [Symbol] The column identifier
   # @option config column.label [String] The column label (optional)
-  # @option config column.html_cell_method [Symbol] The method to call for HTML cell rendering (default: :column_cell_value)
   #
   # @example Basic DSL usage
   #   class MyTable < RapidTable::Base
@@ -30,10 +29,10 @@ module RapidTable
   #   class MyTable < RapidTable::Base
   #     column :id, label: "ID"
   #     column :name, label: "Full Name"
-  #     column :email, html_cell_method: :formatted_email
+  #     column :email
   #
   #     # custom cell method receives record and column
-  #     def formatted_email(record, column)
+  #     column_html :email do |record|
   #       record.email.downcase
   #     end
   #   end
@@ -283,11 +282,11 @@ module RapidTable
       # @param column_id [Symbol] The ID of the column
       # @param block [Proc] The block to define the HTML cell method
       # @return [void]
-      def column_html(column_id, &block)
+      def column_html(column_id, &)
         column = find_column!(column_id)
 
         name = :"column_cell_html_#{column_id}"
-        define_column_method(name, &block)
+        define_column_method(name, &)
         column.html_cell_method = name
       end
 
@@ -296,11 +295,11 @@ module RapidTable
       # @param column_id [Symbol] The ID of the column
       # @param block [Proc] The block to define the value method
       # @return [void]
-      def column_value(column_id, &block)
+      def column_value(column_id, &)
         column = find_column!(column_id)
 
         name = :"column_value_#{column_id}"
-        define_column_method(name, &block)
+        define_column_method(name, &)
         column.value_method = name
       end
 

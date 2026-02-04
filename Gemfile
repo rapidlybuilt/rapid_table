@@ -18,6 +18,7 @@ group :development, :test do
   gem "propshaft"
   gem "puma"
   gem "rubocop", "~> 1.21"
+  gem "rubocop-capybara"
   gem "rubocop-minitest"
   gem "rubocop-rake"
   gem "simplecov", "~> 0.22.0", require: false

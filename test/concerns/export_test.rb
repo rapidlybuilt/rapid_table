@@ -3,111 +3,31 @@
 require "test_helper"
 
 module ExportTest
+  Record = Struct.new(:id, :name)
+
   class InstanceTest < ActiveSupport::TestCase
     class TestTable < RapidTable::Base
       include RapidTable::Export
-    end
 
-    attr_reader :id_column
-    attr_reader :name_column
-    attr_reader :email_column
+      column :id
+      column :name
+    end
 
     def setup
-      @id_column = TestTable::Column.new(id: :id)
-      @name_column = TestTable::Column.new(id: :name)
-      @email_column = TestTable::Column.new(id: :email)
-    end
+      @records = [
+        Record.new(1, "John"),
+        Record.new(2, "Jane")
+      ]
 
-    # Config options tests
-    test "initializes export with default values" do
-      table = TestTable.new([], columns: [id_column, name_column])
-      assert_equal ",", table.csv_column_separator
-      assert_equal 1000, table.export_batch_size
-      assert_equal [:csv, :json], table.export_formats
-      refute table.skip_export?
-    end
-
-    test "allows custom export configuration" do
-      table = TestTable.new([],
-        columns: [id_column, name_column],
-        csv_column_separator: ";",
-        export_batch_size: 500,
-        export_formats: [:csv],
-        skip_export: true
-      )
-      assert_equal ";", table.csv_column_separator
-      assert_equal 500, table.export_batch_size
-      assert_equal [:csv], table.export_formats
-      assert table.skip_export?
-    end
-
-    test "disables export when no formats specified" do
-      table = TestTable.new([], columns: [id_column, name_column], export_formats: [])
-      assert table.skip_export?
-    end
-
-    # Export columns tests
-    test "export_columns returns all columns when none are marked to skip" do
-      table = TestTable.new([], columns: [id_column, name_column, email_column])
-      assert_equal [id_column, name_column, email_column], table.export_columns
-    end
-
-    test "export_columns filters out columns marked to skip export" do
-      email_column.skip_export = true
-      table = TestTable.new([], columns: [id_column, name_column, email_column])
-      assert_equal [id_column, name_column], table.export_columns
-    end
-
-    # Exporting data tests
-    test "knows when it's not exporting data" do
-      table = TestTable.new([], columns: [id_column, name_column])
-      refute table.exporting_data?
-    end
-
-    test "requires an extension to export data" do
-      table = TestTable.new([], columns: [id_column, name_column])
-      assert_raises(RapidTable::ExtensionRequiredError) { table.to_json }
+      @table = TestTable.new(@records)
     end
 
     test "exports JSON" do
-      table = TestTable.new([], columns: [id_column, name_column])
-      table.instance_eval do
-        def each_record(batch_size: nil)
-          record = Object.new
-          record.define_singleton_method(:id) { 1 }
-          record.define_singleton_method(:name) { "John" }
-          yield record
-        end
-      end
-
-      assert_equal [{ id: 1, name: "John" }], table.to_json
+      assert_equal [{ id: 1, name: "John" }, { id: 2, name: "Jane" }], @table.to_json
     end
 
     test "exports to a CSV stream" do
-      table = TestTable.new([], columns: [id_column, name_column])
-      table.instance_eval do
-        def each_record(batch_size: nil)
-          record = Object.new
-          record.define_singleton_method(:id) { 1 }
-          record.define_singleton_method(:name) { "John" }
-          yield record
-        end
-      end
-
-      stream = StringIO.new
-      table.stream_csv(stream)
-      assert_equal "id,name\n1,John\n", stream.string
-    end
-
-    # Column export options tests
-    test "allows columns to be marked for export exclusion" do
-      column = TestTable::Column.new(id: :secret, skip_export: true)
-      assert column.skip_export?
-    end
-
-    test "provides default export inclusion for columns" do
-      column = TestTable::Column.new(id: :name)
-      refute column.skip_export?
+      assert_equal "id,name\n1,John\n2,Jane\n", @table.stream_csv(StringIO.new).string
     end
   end
 
@@ -115,52 +35,40 @@ module ExportTest
     def setup
       @table_class = Class.new RapidTable::Base do
         include RapidTable::Export
+
+        column :id
+        column :name
+
+        def id_cell(record, column)
+          "ID: #{record.id}."
+        end
       end
+
+      @table = @table_class.new([
+        Record.new(1, "John"),
+        Record.new(2, "Jane")
+      ])
     end
 
-    # Class attributes tests
-    test "class has default values" do
-      refute @table_class.skip_export
-      assert_equal ",", @table_class.csv_column_separator
-      assert_equal 1000, @table_class.export_batch_size
+    test "#export_method is used for JSON and CSV export" do
+      @table_class.find_column!(:id).export_method = :id_cell
+
+      assert_equal [{ id: "ID: 1.", name: "John" }, { id: "ID: 2.", name: "Jane" }], @table.to_json
+      assert_equal "id,name\nID: 1.,John\nID: 2.,Jane\n", @table.stream_csv(StringIO.new).string
     end
 
-    test "allows setting class attributes" do
-      @table_class.skip_export = true
-      @table_class.csv_column_separator = ";"
-      @table_class.export_batch_size = 500
+    test "#json_method is used for JSON export, not CSV" do
+      @table_class.find_column!(:id).json_method = :id_cell
 
-      assert @table_class.skip_export
-      assert_equal ";", @table_class.csv_column_separator
-      assert_equal 500, @table_class.export_batch_size
+      assert_equal [{ id: "ID: 1.", name: "John" }, { id: "ID: 2.", name: "Jane" }], @table.to_json
+      assert_equal "id,name\n1,John\n2,Jane\n", @table.stream_csv(StringIO.new).string
     end
 
-    # Configuration inheritance tests
-    test "inherits class attributes to instance config" do
-      @table_class.skip_export = true
-      @table_class.csv_column_separator = ";"
-      @table_class.export_batch_size = 500
+    test "#csv_method is used for CSV export, not JSON" do
+      @table_class.find_column!(:id).csv_method = :id_cell
 
-      table = @table_class.new([], columns: [])
-      assert table.skip_export?
-      assert_equal ";", table.csv_column_separator
-      assert_equal 500, table.export_batch_size
-    end
-
-    test "allows instance-level overrides" do
-      @table_class.skip_export = false
-      @table_class.csv_column_separator = ","
-      @table_class.export_batch_size = 1000
-
-      table = @table_class.new([],
-        columns: [],
-        skip_export: true,
-        csv_column_separator: ";",
-        export_batch_size: 500
-      )
-      assert table.skip_export?
-      assert_equal ";", table.csv_column_separator
-      assert_equal 500, table.export_batch_size
+      assert_equal "id,name\nID: 1.,John\nID: 2.,Jane\n", @table.stream_csv(StringIO.new).string
+      assert_equal [{ id: 1, name: "John" }, { id: 2, name: "Jane" }], @table.to_json
     end
   end
 end

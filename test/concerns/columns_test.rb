@@ -62,18 +62,18 @@ module ColumnsTest
       assert_includes result, "User Name"
     end
 
-    # column_cell tests
-    test "column_cell renders cell content from record attribute" do
+    # column_cell_html tests
+    test "column_cell_html renders cell content from record attribute" do
       table = TestTable.new([], columns: [id_column, name_column])
       record = Minitest::Mock.new
       record.expect(:name, "John Doe")
 
       column = TestTable::Column.new(id: :name)
-      result = table.column_cell(record, column)
+      result = table.column_cell_html(record, column)
       assert_equal "John Doe", result
     end
 
-    test "column_cell renders cell content based on its type" do
+    test "column_cell_html renders cell content based on its type" do
       table = TestTable.new([], columns: [id_column, name_column])
       record = Minitest::Mock.new
       record.expect(:name, "John Doe")
@@ -86,26 +86,37 @@ module ColumnsTest
         end
       end
 
-      result = table.column_cell(record, column)
+      result = table.column_cell_html(record, column)
       assert_equal "STRING", result
     end
 
-    test "column_cell uses custom cell method before falling back to the type" do
-      column = TestTable::Column.new(id: :email, cell_method: :formatted_email)
+    test "column_cell_html uses custom html_cell_method when specified" do
+      column = TestTable::Column.new(id: :email, html_cell_method: :formatted_email)
       table = TestTable.new([], columns: [column])
       record = Minitest::Mock.new
 
       table.instance_eval do
-        def formatted_email(record)
+        def formatted_email(record, column)
           "FORMATTED"
-        end
-
-        def string_cell(record)
-          "STRING"
         end
       end
 
-      result = table.column_cell(record, column)
+      result = table.column_cell_html(record, column)
+      assert_equal "FORMATTED", result
+    end
+
+    test "column_cell_html uses custom value_method when specified" do
+      column = TestTable::Column.new(id: :email, value_method: :formatted_email)
+      table = TestTable.new([], columns: [column])
+      record = Minitest::Mock.new
+
+      table.instance_eval do
+        def formatted_email(record, column)
+          "FORMATTED"
+        end
+      end
+
+      result = table.column_cell_html(record, column)
       assert_equal "FORMATTED", result
     end
   end

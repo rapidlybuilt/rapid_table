@@ -6,7 +6,7 @@ module RapidTable
   #
   # @option config columns [Array<Hash, Column>] The columns to display in the table.
   #   Can be specified as:
-  #   - Hashes: columns [{id: :name, label: "Full Name"}, {id: :email, cell_method: :formatted_email}]
+  #   - Hashes: columns [{id: :name, label: "Full Name"}, {id: :email, html_cell_method: :formatted_email}]
   #   - Column objects: columns [column1, column2]
   # @option config column_ids [Array<Symbol>] Column IDs to include (via DSL)
   # @option config column_group_id [Symbol] Column group ID to use (via DSL)
@@ -16,7 +16,7 @@ module RapidTable
   # When using hashes, each hash supports:
   # @option config column.id [Symbol] The column identifier
   # @option config column.label [String] The column label (optional)
-  # @option config column.cell_method [Symbol] The method to call for cell rendering (optional)
+  # @option config column.html_cell_method [Symbol] The method to call for HTML cell rendering (default: :column_cell_value)
   #
   # @example Basic DSL usage
   #   class MyTable < RapidTable::Base
@@ -24,21 +24,16 @@ module RapidTable
   #     column :name
   #     column :email
   #     column :created_at
-  #
-  #     # implied cell method
-  #     def email_cell(record)
-  #       record.email.downcase
-  #     end
   #   end
   #
   # @example With custom labels and cell methods
   #   class MyTable < RapidTable::Base
   #     column :id, label: "ID"
   #     column :name, label: "Full Name"
-  #     column :email, cell_method: :formatted_email
+  #     column :email, html_cell_method: :formatted_email
   #
-  #     # explicitly specified cell method
-  #     def formatted_email(record)
+  #     # custom cell method receives record and column
+  #     def formatted_email(record, column)
   #       record.email.downcase
   #     end
   #   end
@@ -73,11 +68,8 @@ module RapidTable
       def_extendable_class :column do
         attr_accessor :id
         attr_accessor :label
-        attr_accessor :cell_method
-
-        def cell_method
-          @cell_method ||= :"#{id}_cell"
-        end
+        attr_accessor :value_method
+        attr_accessor :html_cell_method
       end
 
       def_extendable_class :column_group do
@@ -94,19 +86,28 @@ module RapidTable
       tag.span(determine_column_label(column))
     end
 
-    # Renders the cell content for a given record and column.
+    # Renders the cell content for HTML display.
     #
     # @param record [Object] The record object to render the cell for
     # @param column [Object] The column object defining how to render the cell
     # @return [String] The rendered cell content
-    def column_cell(record, column)
-      return send(column.cell_method, record) if respond_to?(column.cell_method, true)
-
-      value = record.send(column.id)
-      column_type_value(value) || value
+    def column_cell_html(record, column)
+      html_cell_method = column.html_cell_method || column.value_method || :column_cell_value
+      send(html_cell_method, record, column)
     end
 
   private
+
+    # Returns the cell value for a given record and column.
+    # This is the base implementation used by format-specific methods.
+    #
+    # @param record [Object] The record object to render the cell for
+    # @param column [Object] The column object defining how to render the cell
+    # @return [Object] The cell value
+    def column_cell_value(record, column)
+      value = record.send(column.id)
+      column_type_value(value) || value
+    end
 
     # Initializes the columns configuration from the provided config object.
     #
@@ -177,11 +178,11 @@ module RapidTable
       # Defines a new column for this table.
       #
       # @param id [Symbol] The unique identifier for the column
-      # @param options [Hash] Additional options for the column (label, cell_method, etc.)
+      # @param options [Hash] Additional options for the column (label, html_cell_method, etc.)
       # @return [Object] The created column object
       # @example
       #   column :id, label: "ID"
-      #   column :email, cell_method: :formatted_email
+      #   column :email, html_cell_method: :formatted_email
       def column(id, **options)
         columns_by_id[id] = build_column(**options, id:)
       end

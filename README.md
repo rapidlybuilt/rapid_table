@@ -72,9 +72,9 @@ Define columns using the `column` class method:
 class UsersTable < ApplicationTable
   column :id, label: "ID"
   column :name, label: "Full Name"
-  column :email, cell_method: :formatted_email
+  column :email, html_cell_method: :formatted_email
 
-  def formatted_email(record)
+  def formatted_email(record, column)
     link_to record.email, "mailto:#{record.email}"
   end
 end
@@ -83,7 +83,7 @@ end
 **Column options:**
 
 - `label` - Display label for the column header (defaults to titleized id)
-- `cell_method` - Custom method to render cell content
+- `html_cell_method` - Custom method to render HTML cell content (receives record and column)
 - `sortable` - Whether the column is sortable (default: false)
 - `skip_export` - Exclude column from exports (default: false)
 

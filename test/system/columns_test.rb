@@ -12,7 +12,9 @@ class ColumnsSystemTest < ApplicationSystemTestCase
   end
 
   class TestTableWithIdCell < TestTable
-    def id_cell(record)
+    column :id, html_cell_method: :id_cell
+
+    def id_cell(record, column)
       "ID: #{record.id}."
     end
   end

@@ -12,7 +12,7 @@ module RapidTable
         # @param options [Hash] Additional HTML options for the checkbox
         # @return [String] The rendered checkbox HTML
         def bulk_actions_select_all_check_box_tag(**options)
-          template.check_box_tag(
+          helpers.check_box_tag(
             "select_all",
             nil,
             false,
@@ -35,7 +35,7 @@ module RapidTable
         def bulk_actions_select_one_check_box_tag(record, **options)
           id = record_id(record)
 
-          template.check_box_tag(
+          helpers.check_box_tag(
             "#{bulk_actions_param}[]",
             id,
             selected_bulk_action_record?(record),
@@ -58,7 +58,7 @@ module RapidTable
           placeholder_choice = [t("bulk_actions.placeholder"), nil]
           choices = bulk_actions.map { |bulk_action| [bulk_action_label(bulk_action), bulk_action.id] }
 
-          template.select_tag(
+          helpers.select_tag(
             nil, # JavaScript cleverness will submit the bulk action
             options_for_select([placeholder_choice] + choices),
             id: id_for(:bulk_actions),
@@ -78,7 +78,7 @@ module RapidTable
         # @param options [Hash] Additional HTML options for the submit button
         # @return [String] The rendered submit button HTML
         def bulk_actions_submit_tag(path: table_path(action: :bulk_action), method: "POST", **options)
-          template.submit_tag(
+          helpers.submit_tag(
             t("bulk_actions.button"),
             title: t("bulk_actions.button_title"),
             **options,

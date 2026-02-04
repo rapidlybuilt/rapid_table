@@ -8,7 +8,7 @@ module UsesRapidTables
 
   def rapid_table(records = nil, table_class: nil, **options, &block)
     table_class ||= determine_rapid_table_class(records)
-    table_class.new(records, params:, template: view_context, **options, &block)
+    table_class.new(records, params:, **options, &block)
   end
 
   def rapid_table?(table)

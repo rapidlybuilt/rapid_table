@@ -28,7 +28,7 @@ module RapidTable
     # @param options [Hash] Additional HTML options for the input tag
     # @return [String] The rendered search input HTML
     def search_field_tag(options = {})
-      template.search_field_tag(
+      helpers.search_field_tag(
         param_name(search_param),
         search_query,
         id: id_for(:search),

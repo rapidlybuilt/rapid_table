@@ -1,6 +1,6 @@
 class MockedTablesController < ApplicationController
   include UsesRapidTables
-  
+
   cattr_accessor :table_class
   cattr_accessor :records
   cattr_accessor :options
@@ -32,7 +32,6 @@ class MockedTablesController < ApplicationController
     @table = self.class.table_class.new(
       self.class.records,
       params:,
-      template: view_context,
       **(self.class.options || {}),
       &self.class.block
     )

@@ -17,11 +17,10 @@ module RapidTable
   module ColumnTypes
     extend ActiveSupport::Concern
 
+    # rubocop:disable Metrics/BlockLength
     included do
       # Renders a string value.
-      column_type :string do |value|
-        value.to_s
-      end
+      column_type :string, &:to_s
 
       # Renders an integer value with thousands separators.
       # @example 1234567 => "1,234,567"
@@ -72,5 +71,6 @@ module RapidTable
         number_to_percentage(percentage, precision: 2)
       end
     end
+    # rubocop:enable Metrics/BlockLength
   end
 end

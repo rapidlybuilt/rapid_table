@@ -278,6 +278,32 @@ module RapidTable
         column_groups_by_id[:default] || define_default_column_group
       end
 
+      # Defines a custom HTML cell method for a column.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the HTML cell method
+      # @return [void]
+      def column_html(column_id, &block)
+        column = find_column!(column_id)
+
+        name = :"column_cell_html_#{column_id}"
+        define_column_method(name, &block)
+        column.html_cell_method = name
+      end
+
+      # Defines a custom value method for a column.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the value method
+      # @return [void]
+      def column_value(column_id, &block)
+        column = find_column!(column_id)
+
+        name = :"column_value_#{column_id}"
+        define_column_method(name, &block)
+        column.value_method = name
+      end
+
     private
 
       # Returns the registry of columns by ID.
@@ -299,6 +325,16 @@ module RapidTable
       # @return [Object] The default column group
       def define_default_column_group
         column_group(:default, columns.map(&:id))
+      end
+
+      # Allows the column method to optionally receive a column object as the second argument
+      # but most of the time it's redundant/unnecessary.
+      def define_column_method(name, &block)
+        if block.arity == 1
+          define_method(name) { |record, _column| instance_exec(record, &block) }
+        else
+          define_method name, &block
+        end
       end
     end
 

@@ -3,6 +3,8 @@
 require "test_helper"
 
 module ColumnsTest
+  Record = Struct.new(:id, :name, :email)
+
   class InstanceTest < ActiveSupport::TestCase
     class TestTable < RapidTable::Base
       include RapidTable::Columns
@@ -254,6 +256,38 @@ module ColumnsTest
 
       column = child_class.find_column(:id)
       assert_equal :id, column.id
+    end
+
+    test "sugar for specifying column HTML cell logic" do
+      @table_class.class_eval do
+        column :email
+
+        column_html :email do |record|
+          "FORMATTED"
+        end
+      end
+
+      table = @table_class.new([])
+      record = Minitest::Mock.new
+
+      result = table.column_cell_html(record, @table_class.find_column!(:email))
+      assert_equal "FORMATTED", result
+    end
+
+    test "sugar for specifying column value logic" do
+      @table_class.class_eval do
+        column :email
+
+        column_value :email do |record|
+          "FORMATTED"
+        end
+      end
+
+      table = @table_class.new([])
+      record = Minitest::Mock.new
+
+      result = table.column_cell_html(record, @table_class.find_column!(:email))
+      assert_equal "FORMATTED", result
     end
   end
 end

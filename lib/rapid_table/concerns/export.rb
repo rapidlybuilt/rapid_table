@@ -135,5 +135,47 @@ module RapidTable
       # Disable export if no formats are specified
       config.skip_export = true if config.export_formats.empty?
     end
+
+    # The ClassMethods module provides methods for defining custom export methods for columns.
+    module ClassMethods
+      # Defines logic for a exporting a column to CSV/JSON.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the export method
+      # @return [void]
+      def column_export(column_id, &block)
+        column = find_column!(column_id)
+
+        name = :"column_cell_export_#{column_id}"
+        define_column_method(name, &block)
+        column.export_method = name
+      end
+
+      # Defines logic for a exporting a column to CSV.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the CSV method
+      # @return [void]
+      def column_csv(column_id, &block)
+        column = find_column!(column_id)
+
+        name = :"column_cell_csv_#{column_id}"
+        define_column_method(name, &block)
+        column.csv_method = name
+      end
+
+      # Defines logic for a exporting a column to JSON.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the JSON method
+      # @return [void]
+      def column_json(column_id, &block)
+        column = find_column!(column_id)
+
+        name = :"column_cell_json_#{column_id}"
+        define_column_method(name, &block)
+        column.json_method = name
+      end
+    end
   end
 end

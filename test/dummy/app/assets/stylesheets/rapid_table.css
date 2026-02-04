@@ -1,4 +1,4 @@
-/** 
+/**
  * RapidTable Styles
  * Customize these styles to match your application's design
  */
@@ -8,7 +8,7 @@
   display: flow-root;
 }
 
-.rapid-table-scroll-wrapper {
+.rapid-table-wrapper {
   margin-left: -1rem;
   margin-right: -1rem;
   margin-top: -0.5rem;
@@ -17,14 +17,14 @@
 }
 
 @media (min-width: 640px) {
-  .rapid-table-scroll-wrapper {
+  .rapid-table-wrapper {
     margin-left: -1.5rem;
     margin-right: -1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .rapid-table-scroll-wrapper {
+  .rapid-table-wrapper {
     margin-left: -2rem;
     margin-right: -2rem;
   }

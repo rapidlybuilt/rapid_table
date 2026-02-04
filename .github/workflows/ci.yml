@@ -37,7 +37,7 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Run the default task
-        run: bundle exec rspec
+        run: bundle exec rake test
 
   release:
     runs-on: ubuntu-latest

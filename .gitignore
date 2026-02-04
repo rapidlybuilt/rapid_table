@@ -13,6 +13,6 @@
 .DS_Store
 Gemfile.lock
 
-/spec/sandbox/log/*
-/spec/sandbox/storage/*
-/spec/sandbox/tmp/*
+/test/dummy/log/*
+/test/dummy/storage/*
+/test/dummy/tmp/*

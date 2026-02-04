@@ -14,14 +14,13 @@ group :development, :test do
   gem "debug", platforms: %i[mri windows], require: "debug/prelude"
   gem "ferrum", "~> 0", require: false
   gem "importmap-rails"
+  gem "minitest", "~> 5.0"
   gem "propshaft"
   gem "puma"
-  gem "rspec-rails", "~> 6.0"
   gem "rubocop", "~> 1.21"
   gem "rubocop-capybara"
+  gem "rubocop-minitest"
   gem "rubocop-rake"
-  gem "rubocop-rspec"
-  gem "rubocop-rspec_rails"
   gem "simplecov", "~> 0.22.0", require: false
   gem "sqlite3"
   gem "stimulus-rails"

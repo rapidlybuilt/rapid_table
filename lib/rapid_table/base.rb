@@ -9,7 +9,6 @@ module RapidTable
 
     attr_reader :id
     attr_reader :base_scope
-    attr_reader :template
     attr_reader :table_name
     attr_reader :config
 
@@ -18,13 +17,12 @@ module RapidTable
       delegate :any?
     end
 
-    def initialize(base_scope, id: nil, template: nil, **options, &block)
+    def initialize(base_scope, id: nil, **options, &block)
       ensure_base_scope_or_block(base_scope, block)
 
       super()
 
       @base_scope = base_scope || block
-      @template = template
 
       @id = id || self.class.name.underscore.gsub("/", "_") if self.class.name
       @table_name = self.class.table_name

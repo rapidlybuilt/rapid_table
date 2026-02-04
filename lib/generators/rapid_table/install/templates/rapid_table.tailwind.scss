@@ -1,4 +1,4 @@
-/** 
+/**
  * RapidTable Styles
  * Customize these styles to match your application's design
  */
@@ -7,7 +7,7 @@
   @apply mt-8 flow-root;
 }
 
-.rapid-table-scroll-wrapper {
+.rapid-table-wrapper {
   @apply -mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8;
 }
 

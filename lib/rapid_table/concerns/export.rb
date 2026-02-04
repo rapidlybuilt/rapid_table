@@ -39,6 +39,10 @@ module RapidTable
       column_class! do
         attr_accessor :skip_export
         alias_method :skip_export?, :skip_export
+
+        attr_accessor :export_method
+        attr_accessor :csv_method
+        attr_accessor :json_method
       end
     end
 
@@ -56,55 +60,66 @@ module RapidTable
     def stream_csv(stream)
       require "csv"
 
-      with_export do
-        row_sep = "\n"
+      row_sep = "\n"
 
-        stream.write(CSV.generate_line(export_columns.map(&:id), row_sep:))
+      stream.write(CSV.generate_line(export_columns.map(&:id), row_sep:))
 
-        each_record(batch_size: export_batch_size) do |record|
-          cells = export_columns.map do |column|
-            column_cell(record, column)
-          end
-
-          stream.write(CSV.generate_line(cells, row_sep:))
+      each_record(batch_size: export_batch_size) do |record|
+        cells = export_columns.map do |column|
+          column_cell_csv(record, column)
         end
+
+        stream.write(CSV.generate_line(cells, row_sep:))
       end
+
+      stream
     end
 
     # Exports table data as JSON.
     #
     # @return [Array<Hash>] Array of hashes representing table records
     def to_json(*_args)
-      with_export do
-        data = []
+      data = []
 
-        each_record(batch_size: export_batch_size) do |record|
-          data << export_columns.each_with_object({}) do |column, hash|
-            hash[column.id] = column_cell(record, column)
-          end
+      each_record(batch_size: export_batch_size) do |record|
+        data << export_columns.each_with_object({}) do |column, hash|
+          hash[column.id] = column_cell_json(record, column)
         end
-
-        data
       end
+
+      data
     end
 
-    # Checks if the table is currently exporting data. Useful for deciding
-    # whether a cell should include HTML or plain text.
+    # Returns the cell value formatted for CSV export.
     #
-    # @return [Boolean] True if currently exporting, false otherwise
-    def exporting_data?
-      @exporting_data
+    # @param record [Object] The record object to render the cell for
+    # @param column [Object] The column object defining how to render the cell
+    # @return [Object] The cell value for CSV
+    def column_cell_csv(record, column)
+      csv_method = column.csv_method || column.export_method || column.value_method || :column_cell_value
+      send(csv_method, record, column)
+    end
+
+    # Returns the cell value formatted for JSON export.
+    #
+    # @param record [Object] The record object to render the cell for
+    # @param column [Object] The column object defining how to render the cell
+    # @return [Object] The cell value for JSON
+    def column_cell_json(record, column)
+      json_method = column.json_method || column.export_method || column.value_method || :column_cell_value
+      send(json_method, record, column)
     end
 
     # rubocop:disable Lint/UnusedMethodArgument
 
-    # Iterates over records for export processing. Must be implemented by extensions.
+    # Iterates over records for export processing.
+    # By default, yields each record in turn.
+    # Extensions may override for optimal batch or paged access.
     #
-    # @param batch_size [Integer, nil] The number of records to process in each batch
+    # @param batch_size [Integer, nil] The number of records to process in each batch (optional, for extensions)
     # @yield [record] Block to execute for each record
-    # @raise [ExtensionRequiredError] If no extension provides this functionality
-    def each_record(batch_size: nil)
-      raise ExtensionRequiredError
+    def each_record(batch_size: nil, &block)
+      base_scope.each(&block)
     end
     # rubocop:enable Lint/UnusedMethodArgument
 
@@ -119,15 +134,46 @@ module RapidTable
       config.skip_export = true if config.export_formats.empty?
     end
 
-    # Executes a block within the export context, setting the exporting_data flag.
-    #
-    # @yield The block to execute during export
-    # @return [Object] The result of the yielded block
-    def with_export
-      @exporting_data = true
-      yield
-    ensure
-      @exporting_data = false
+    # The ClassMethods module provides methods for defining custom export methods for columns.
+    module ClassMethods
+      # Defines logic for a exporting a column to CSV/JSON.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the export method
+      # @return [void]
+      def column_export(column_id, &)
+        column = find_column!(column_id)
+
+        name = :"column_cell_export_#{column_id}"
+        define_column_method(name, &)
+        column.export_method = name
+      end
+
+      # Defines logic for a exporting a column to CSV.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the CSV method
+      # @return [void]
+      def column_csv(column_id, &)
+        column = find_column!(column_id)
+
+        name = :"column_cell_csv_#{column_id}"
+        define_column_method(name, &)
+        column.csv_method = name
+      end
+
+      # Defines logic for a exporting a column to JSON.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the JSON method
+      # @return [void]
+      def column_json(column_id, &)
+        column = find_column!(column_id)
+
+        name = :"column_cell_json_#{column_id}"
+        define_column_method(name, &)
+        column.json_method = name
+      end
     end
   end
 end

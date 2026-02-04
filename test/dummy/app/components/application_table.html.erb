@@ -1,0 +1,80 @@
+<div id="<%= id %>" data-controller="rapid-table">
+  <div class="rapid-table-header">
+    <% if respond_to?(:skip_bulk_actions?) && !skip_bulk_actions? %>
+      <div class="rapid-table-bulk-actions-select-container">
+        <%= bulk_actions_select_tag class: "rapid-table-select" %>
+        <%= bulk_actions_submit_tag class: "rapid-table-button" %>
+      </div>
+    <% end %>
+
+    <div class="rapid-table-header-actions">
+      <%= search_field_form(class: "rapid-table-search-form") do %>
+        <%= search_field_tag class: "rapid-table-search-input" %>
+      <% end unless skip_search? %>
+    </div>
+  </div>
+
+  <div class="rapid-table-wrapper">
+    <table class="rapid-table">
+      <thead class="rapid-table-thead">
+        <tr>
+          <% if respond_to?(:skip_bulk_actions?) && !skip_bulk_actions? %>
+            <th scope="col" class="rapid-table-header-cell w-8">
+              <span><%= bulk_actions_select_all_check_box_tag %></span>
+            </th>
+          <% end %>
+          <% columns.each do |column| %>
+            <th scope="col" class="rapid-table-header-cell">
+              <%= column_label column %>
+            </th>
+          <% end %>
+          <%# <th scope="col" class="admin-table-header-actions">Actions</th> %>
+        </tr>
+      </thead>
+      <tbody class="rapid-table-body">
+        <% records.each do |record| %>
+          <tr id="<%= dom_id record %>">
+            <% if respond_to?(:skip_bulk_actions?) && !skip_bulk_actions? %>
+              <td class="rapid-table-cell">
+                <%= bulk_actions_select_one_check_box_tag record %>
+              </td>
+            <% end %>
+            <% columns.each do |column| %>
+              <td class="rapid-table-cell">
+                <%= column_cell_html(record, column) %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if records.none? %>
+      <p class="rapid-table-empty-message"><%= empty_message %></p>
+    <% end %>
+  </div>
+
+  <% unless only_ever_one_page? && skip_export? %>
+    <div class="rapid-table-footer">
+      <% if only_ever_one_page? %>
+        <div></div>
+      <% else %>
+        <label>
+          Per Page:
+          <%= per_page_select_tag class: "rapid-table-select rapid-table-per-page-select" %>
+        </label>
+        <div class="rapid-table-paginate">
+          <%= pagination_links %>
+        </div>
+      <% end %>
+      <% unless skip_export? %>
+        <div class="rapid-table-exports">
+          Download:
+          <% export_formats.each do |format| %>
+            <%= link_to t("export.formats.#{format}"), table_path(format:), class: "badge-primary" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

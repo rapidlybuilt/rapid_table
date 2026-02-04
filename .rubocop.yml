@@ -1,12 +1,11 @@
 plugins:
-  - rubocop-capybara
+  - rubocop-minitest
   - rubocop-rake
-  - rubocop-rspec
-  - rubocop-rspec_rails
+  - rubocop-capybara
 AllCops:
   NewCops: enable
   Exclude:
-  - spec/**/*
+  - test/**/*
   - tmp/**/*
   - vendor/**/*
   TargetRubyVersion: "3.1"

@@ -6,7 +6,7 @@ module RapidTable
   #
   # @option config columns [Array<Hash, Column>] The columns to display in the table.
   #   Can be specified as:
-  #   - Hashes: columns [{id: :name, label: "Full Name"}, {id: :email, cell_method: :formatted_email}]
+  #   - Hashes: columns [{id: :name, label: "Full Name"}, {id: :email, html_cell_method: :formatted_email}]
   #   - Column objects: columns [column1, column2]
   # @option config column_ids [Array<Symbol>] Column IDs to include (via DSL)
   # @option config column_group_id [Symbol] Column group ID to use (via DSL)
@@ -16,7 +16,6 @@ module RapidTable
   # When using hashes, each hash supports:
   # @option config column.id [Symbol] The column identifier
   # @option config column.label [String] The column label (optional)
-  # @option config column.cell_method [Symbol] The method to call for cell rendering (optional)
   #
   # @example Basic DSL usage
   #   class MyTable < RapidTable::Base
@@ -24,21 +23,16 @@ module RapidTable
   #     column :name
   #     column :email
   #     column :created_at
-  #
-  #     # implied cell method
-  #     def email_cell(record)
-  #       record.email.downcase
-  #     end
   #   end
   #
   # @example With custom labels and cell methods
   #   class MyTable < RapidTable::Base
   #     column :id, label: "ID"
   #     column :name, label: "Full Name"
-  #     column :email, cell_method: :formatted_email
+  #     column :email
   #
-  #     # explicitly specified cell method
-  #     def formatted_email(record)
+  #     # custom cell method receives record and column
+  #     column_html :email do |record|
   #       record.email.downcase
   #     end
   #   end
@@ -73,11 +67,9 @@ module RapidTable
       def_extendable_class :column do
         attr_accessor :id
         attr_accessor :label
-        attr_accessor :cell_method
-
-        def cell_method
-          @cell_method ||= :"#{id}_cell"
-        end
+        attr_accessor :value_method
+        attr_accessor :type_method
+        attr_accessor :html_cell_method
       end
 
       def_extendable_class :column_group do
@@ -94,19 +86,27 @@ module RapidTable
       tag.span(determine_column_label(column))
     end
 
-    # Renders the cell content for a given record and column.
+    # Renders the cell content for HTML display.
     #
     # @param record [Object] The record object to render the cell for
     # @param column [Object] The column object defining how to render the cell
     # @return [String] The rendered cell content
-    def column_cell(record, column)
-      return send(column.cell_method, record) if respond_to?(column.cell_method, true)
-
-      value = record.send(column.id)
-      column_type_value(value) || value
+    def column_cell_html(record, column)
+      html_cell_method = column.html_cell_method || column.type_method || column.value_method || :column_cell_value
+      send(html_cell_method, record, column)
     end
 
   private
+
+    # Returns the cell value for a given record and column.
+    # This is the base implementation used by format-specific methods.
+    #
+    # @param record [Object] The record object to render the cell for
+    # @param column [Object] The column object defining how to render the cell
+    # @return [Object] The cell value
+    def column_cell_value(record, column)
+      record.send(column.id)
+    end
 
     # Initializes the columns configuration from the provided config object.
     #
@@ -145,20 +145,6 @@ module RapidTable
       column.label || RapidTable.t("columns.#{id}", table_name:) || id.to_s.titleize
     end
 
-    # Attempts to find a type-specific cell helper method for the given value.
-    #
-    # @param value [Object] The value to render
-    # @return [String, nil] The rendered value or nil if no helper method exists
-    def column_type_value(value)
-      klass = value.class
-      # OPTIMIZE: cache the results so we're not introspecting every time
-
-      helper = :"#{klass.name.underscore.gsub("/", "_")}_cell"
-      return unless respond_to?(helper, true)
-
-      send(helper, value)
-    end
-
     # Filters columns based on the only and except configuration options.
     #
     # @param columns [Array] The array of columns to filter
@@ -177,11 +163,11 @@ module RapidTable
       # Defines a new column for this table.
       #
       # @param id [Symbol] The unique identifier for the column
-      # @param options [Hash] Additional options for the column (label, cell_method, etc.)
+      # @param options [Hash] Additional options for the column (label, html_cell_method, etc.)
       # @return [Object] The created column object
       # @example
       #   column :id, label: "ID"
-      #   column :email, cell_method: :formatted_email
+      #   column :email, html_cell_method: :formatted_email
       def column(id, **options)
         columns_by_id[id] = build_column(**options, id:)
       end
@@ -198,10 +184,38 @@ module RapidTable
         column_groups_by_id[id] = build_column_group(**options, id:, column_ids:)
       end
 
+      # Defines a new column type for this table.
+      #
+      # @param type [Symbol] The type of column
+      # @param block [Proc] The block to define the column type
+      # @return [void]
+      # @example
+      #   column_type :string do |value|
+      #     "STRING: #{value}"
+      #   end
+      #
+      #   # this type can then be used to define columns
+      #   columns do |t|
+      #     t.string :id
+      #   end
+      def column_type(type, &block)
+        name = :"column_type_#{type}"
+        define_method(name) do |record, column|
+          value = column_cell_value(record, column)
+          instance_exec(value, &block) unless value.nil?
+        end
+      end
+
       # Gets all defined columns for this table, including inherited ones.
       #
+      # @param block [Proc] The block to define the columns by type
       # @return [Array<Object>] Array of column objects
       def columns
+        if block_given?
+          builder = Builder.new(self)
+          yield builder
+        end
+
         ((superclass&.columns if superclass.respond_to?(:columns)) || []) +
           columns_by_id.values
       end
@@ -277,6 +291,32 @@ module RapidTable
         column_groups_by_id[:default] || define_default_column_group
       end
 
+      # Defines a custom HTML cell method for a column.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the HTML cell method
+      # @return [void]
+      def column_html(column_id, &)
+        column = find_column!(column_id)
+
+        name = :"column_cell_html_#{column_id}"
+        define_column_method(name, &)
+        column.html_cell_method = name
+      end
+
+      # Defines a custom value method for a column.
+      #
+      # @param column_id [Symbol] The ID of the column
+      # @param block [Proc] The block to define the value method
+      # @return [void]
+      def column_value(column_id, &)
+        column = find_column!(column_id)
+
+        name = :"column_value_#{column_id}"
+        define_column_method(name, &)
+        column.value_method = name
+      end
+
     private
 
       # Returns the registry of columns by ID.
@@ -298,6 +338,16 @@ module RapidTable
       # @return [Object] The default column group
       def define_default_column_group
         column_group(:default, columns.map(&:id))
+      end
+
+      # Allows the column method to optionally receive a column object as the second argument
+      # but most of the time it's redundant/unnecessary.
+      def define_column_method(name, &block)
+        if block.arity == 1
+          define_method(name) { |record, _column| instance_exec(record, &block) }
+        else
+          define_method name, &block
+        end
       end
     end
 
@@ -332,6 +382,31 @@ module RapidTable
       def ensure_array(value)
         value = [value] if value && !value.is_a?(Array)
         value
+      end
+    end
+
+    # Builder for the column DSL.
+    class Builder
+      def initialize(klass)
+        @klass = klass
+      end
+
+      def method_missing(method, *args, **kwargs, &)
+        # must match our column_type method signature
+        super if args.length != 1 || block_given?
+
+        # type must have already been defined
+        name = :"column_type_#{method}"
+        super unless @klass.method_defined?(name)
+
+        # define the column and set the value method
+        column = @klass.column(args.first, **kwargs)
+        column.value_method = name
+        column
+      end
+
+      def respond_to_missing?(method, include_private = false)
+        @klass.method_defined?(:"column_type_#{method}") || super
       end
     end
   end
